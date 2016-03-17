@@ -23,6 +23,19 @@ import nagios_openstack_argparse
 
 
 def create_os_client(arguments):
+
+    def verify_to_bool(verify):
+        """ Verify must be either a boolean or a string
+            so we must convert, if we can.
+         """
+        # check for actual bool values
+        if verify.lower() in ['true', 't', 'y', 'yes']:
+            return True
+        if verify.lower() in ['false', 'f', 'n', 'no']:
+            return False
+        # neither found, probably a path, then.
+        return verify
+
     if not all([
         arguments.os_username,
         arguments.os_password,
@@ -32,14 +45,18 @@ def create_os_client(arguments):
             ]):
         print "UNKNOWN - All openstack arguments must be provided."
         sys.exit(3)
+    verify = verify_to_bool(arguments.verify)
     auth = v2.Password(
         username=arguments.os_username,
         password=arguments.os_password,
         tenant_name=arguments.os_tenant_name,
         auth_url=arguments.os_auth_url
     )
-    sess = session.Session(auth=auth)
-    kc = ks_client.Client(session=sess, insecure=True)
+    sess = session.Session(
+        auth=auth,
+        verify=verify,
+        timeout=arguments.timeout)
+    kc = ks_client.Client(session=sess)
 
     try:
         service = kc.services.find(type="registration")
@@ -63,7 +80,8 @@ def create_os_client(arguments):
 
 
 def check_stacktask_notifications():
-    # Note(dale): use custom ArgumentParser to implement --extra-opts
+    # Note(dale): use custom ArgumentParser to implement --extra-opts ini
+    # and other --os-* arguments.
     parser = nagios_openstack_argparse.NagiosOpenstackArgparse()
 
     parser.add_argument(
@@ -74,10 +92,15 @@ def check_stacktask_notifications():
         '-w', '--warning', metavar='error_count',
         type=int, default=1, required=False,
         help='Number of unack notifications considered WARNING.')
-    parser.add_argument('-v', '--verbose', type=int, nargs='+')
+    parser.add_argument(
+        '--timeout', type=float, default=5, required=False,
+        help='A timeout to pass to requests. This should be a numerical value indicating some amount (or fraction) of seconds. (optional, defaults to 5)')
+    parser.add_argument(
+        '--verify', default=True, required=False,
+        help='The verification arguments to pass to keystone.Session and then requests. These are of the same form as requests expects, so True or False to verify (or not) against system certificates or a path to a bundle or CA certs to check against or None for requests to attempt to locate and use certificates. (optional, defaults to True)')
+    parser.add_argument('-v', '--verbose', action='store_true')
 
     arguments = parser.parse_args()
-
     client = create_os_client(arguments)
 
     response = client.status.get()

@@ -5,7 +5,7 @@ with open('requirements.txt') as file:
 
 setup(
     name='nagios-plugins-stacktask',
-    version='0.1',
+    version='0.0.1',
     author='Catalyst Cloud Team',
     author_email='cloud@catalyst.net.nz',
     url='http://www.catalyst.net.nz',

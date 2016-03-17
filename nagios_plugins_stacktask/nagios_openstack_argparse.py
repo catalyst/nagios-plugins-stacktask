@@ -56,16 +56,16 @@ class NagiosOpenstackArgparse(argparse.ArgumentParser):
 
     def __init__(self):
         super(NagiosOpenstackArgparse, self).__init__()
-        self.add_openstack_parsers()
+        self._add_openstack_parsers()
         self.extra_opt_values = {}
 
     def parse_args(self):
         arguments = super(NagiosOpenstackArgparse, self).parse_args()
-        self.read_extra_opts(arguments)
-        self.resolve_defaults(arguments)
+        self._read_extra_opts(arguments)
+        self._resolve_defaults(arguments)
         return arguments
 
-    def add_openstack_parsers(self):
+    def _add_openstack_parsers(self):
         for opt in self.openstack_opts:
             self.add_argument(
                 opt.arg,
@@ -78,7 +78,7 @@ class NagiosOpenstackArgparse(argparse.ArgumentParser):
             metavar='INI_FILE:SECTION',
             help='Ini file and section to read before using environment variable defaults, useful for protecting credentials from command line arguments and environment variables.')
 
-    def resolve_defaults(self, arguments):
+    def _resolve_defaults(self, arguments):
         for opt in self.openstack_opts:
             opt_name = opt.ini_opt
             if getattr(arguments, opt_name) is not None:
@@ -97,7 +97,7 @@ class NagiosOpenstackArgparse(argparse.ArgumentParser):
                     None,
                     "Openstack config option '%s' must be provided." % opt_name)
 
-    def read_extra_opts(self, arguments):
+    def _read_extra_opts(self, arguments):
         """ Reads an INI format file into the extra_opt_values dict """
         if (not hasattr(arguments, 'extra_opts') or
                 arguments.extra_opts is None):

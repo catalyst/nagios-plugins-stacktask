@@ -1,2 +1,3 @@
 python-stacktaskclient
 python-keystoneclient
+urllib3[secure]
